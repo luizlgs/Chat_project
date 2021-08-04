@@ -6,29 +6,53 @@ PORT = 12999
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 conectado = s.connect((HOST, PORT))
 exit_farewell = 0
-if_tchau = ''
-while True:
-    if conectado:
+
+def send_message():
+    message = input('Digite sua mensagem: ')
+    encode_message = message.encode('utf-8')
+    s.sendall(encode_message)
+
+def receive_message():
+    received = s.recv(1024)
+    return received
+
+def login():
+    while True:
+        name = input('Digite seu nome: ')
+        s.sendall(name.encode('utf-8'))
+        answer = s.recv(1024)
+        if answer.decode() == 'incorrect':
+            print('Nome inválido')
+        else:
+            while True:
+                password = input('Digite sua senha: ')
+                s.sendall(password.encode('utf-8'))
+                answer = s.recv(1024)
+                if answer.decode() == 'incorrect':
+                    print('Senha incorreta')
+                    continue
+                if answer.decode() == 'correct':
+                    print('senha correta')
+                    s.close()
+                    break
+            break
+
+def register():
+    while True:
+        name = input('Digite seu nome: ')
+        s.sendall(name.encode('utf-8'))
+        password = input('Digite sua senha: ')
+        s.sendall(password.encode('utf-8'))
+        print('Conta criada!')
         break
-    if if_tchau == 'Tchau' or if_tchau == 'tchau':
-        s.close()
-        exit()
-    msg = input('Digite sua mensagem: ')
-    if msg == 'tchau' or msg == 'Tchau':
-        if_tchau = msg
-    final_msg = msg.encode('utf-8')
-    s.sendall(final_msg)
-    print('\033[1;92mMensagem enviada\033[m')
-    if exit_farewell >= 1:
-        s.close()
-        exit()
-    try:
-        data = s.recv(1024)
-        print(f'Recieved: \033[1;36m{data.decode()}\033[m')
-    except:
-        s.close()
-        exit()
-        continue
-    else:
-        if data.decode() == 'Tchau' or data.decode() == 'tchau':
-            exit_farewell += 1
+
+while True:
+    option = input('Login(l), register(r): ')
+    if option == 'l':
+        s.sendall('login'.encode('utf-8'))
+        login()
+
+    if option == 'r':
+        s.sendall('register'.encode('utf-8'))
+        register()
+    break
