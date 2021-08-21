@@ -44,6 +44,8 @@ def register():
         password = input('Digite sua senha: ')
         s.sendall(password.encode('utf-8'))
         print('Conta criada!')
+        new_action = input('Deseja logar com sua nova conta[s/n]? ')
+        s.sendall(new_action.encode('utf-8'))
         break
 
 while True:
@@ -55,4 +57,8 @@ while True:
     if option == 'r':
         s.sendall('register'.encode('utf-8'))
         register()
+        if s.recv(1024).decode() == 'true':
+            login()
+        else:
+            break
     break
