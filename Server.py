@@ -15,28 +15,22 @@ def server():
     server_socket.bind((HOST, PORT))
     server_socket.listen()
 
-    def receive_clients():
-        while True:
-            try:
-                client_s, addr = server_socket.accept()
-                connection_alert = print('connected by', addr)
-                confirmation = client_s.recv(1024)
-            except:
-                continue
-            if confirmation.decode() == 'login':
-                login_confirmation(client_s)
-            if confirmation.decode() == 'register':
-                register(client_s)
-                try:
-                    if client_s.recv(1024).decode() == 's':
-                        client_s.sendall('true'.encode('utf-8'))
-                        login_confirmation(client_s)
-                    if client_s.recv(1024).decode() == 'n':
-                        break
-                except:
-                    break
-            clients_working = threading.Thread(receive_clients())
-    receive_clients()
+    def handle_client(client_s, addr):
+        print('connected by', addr)
+        try:
+            confirmation = client_s.recv(1024)
+        except:
+            print(f'O cliente "{addr}" vazou!')
+            return
+        if confirmation.decode() == 'login':
+            login_confirmation(client_s)
+        if confirmation.decode() == 'register':
+            register(client_s)
+    while True:
+        client_s, addr = server_socket.accept()
+        individual_client = threading.Thread(target=handle_client, args=(client_s, addr))
+        individual_client.start()
+        #handle_client(client_s, addr)
 
 def login_confirmation(client_socket):
     while True:
