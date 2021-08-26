@@ -4,7 +4,6 @@ path = "C:\\Users\\luigu\\PycharmProjects\\PythonProjects\\Chat_users"
 content = open(path).read().split('\n')
 all_items = [x.split(':') for x in content if x]
 database = dict(all_items)
-users_online = {}
 
 import socket
 print('Waiting some connection')
@@ -26,6 +25,7 @@ def server():
             login_confirmation(client_s)
         if confirmation.decode() == 'register':
             register(client_s)
+
     while True:
         client_s, addr = server_socket.accept()
         individual_client = threading.Thread(target=handle_client, args=(client_s, addr))
@@ -64,9 +64,9 @@ def login_confirmation(client_socket):
 
 
 
-def register(server_socket):
-    name = server_socket.recv(1024).decode()
-    password = server_socket.recv(1024).decode()
+def register(client_socket):
+    name = client_socket.recv(1024).decode()
+    password = client_socket.recv(1024).decode()
     open_database_to_read = open('Chat_users', 'r')
     read_database = open_database_to_read.readlines()
     new_user = read_database.append(f'\n{str(name)}:{str(password)}')
