@@ -4,7 +4,14 @@ path = "C:\\Users\\luigu\\PycharmProjects\\PythonProjects\\Chat_users"
 content = open(path).read().split('\n')
 all_items = [x.split(':') for x in content if x]
 database = dict(all_items)
+online_users = {}
+online_users_name = []
+online_users_addr = {}
+online_users_inbox = {}
+online_users_addr_to_name = {}
 
+import time
+from time import sleep
 import socket
 print('Waiting some connection')
 HOST = '127.0.0.1'
@@ -25,12 +32,12 @@ def server():
             login_confirmation(client_s)
         if confirmation.decode() == 'register':
             register(client_s)
+        inbox(client_s)
 
     while True:
         client_s, addr = server_socket.accept()
         individual_client = threading.Thread(target=handle_client, args=(client_s, addr))
         individual_client.start()
-        #handle_client(client_s, addr)
 
 def login_confirmation(client_socket):
     while True:
@@ -55,6 +62,12 @@ def login_confirmation(client_socket):
                 if password == database[user]:
                     confirmation = 'correct'
                     client_socket.sendall(confirmation.encode('utf-8'))
+                    if user not in online_users:
+                        online_users[user] = password
+                        online_users_name.append(user)
+                        online_users_addr[user] = client_socket
+                        online_users_inbox[user] = []
+                        online_users_addr_to_name[client_socket] = user
                     break
                 else:
                     confirmation = 'incorrect'
@@ -63,15 +76,42 @@ def login_confirmation(client_socket):
         break
 
 
-
 def register(client_socket):
-    name = client_socket.recv(1024).decode()
-    password = client_socket.recv(1024).decode()
-    open_database_to_read = open('Chat_users', 'r')
-    read_database = open_database_to_read.readlines()
-    new_user = read_database.append(f'\n{str(name)}:{str(password)}')
-    open_database_to_write = open('Chat_users', 'w')
-    open_database_to_write.writelines(read_database)
-    database[name] = password
+    while True:
+        name = client_socket.recv(1024).decode()
+        if name not in database:
+            client_socket.sendall('ok'.encode('utf-8'))
+            password = client_socket.recv(1024).decode()
+            open_database_to_read = open('Chat_users', 'r')
+            read_database = open_database_to_read.readlines()
+            new_user = read_database.append(f'\n{str(name)}:{str(password)}')
+            open_database_to_write = open('Chat_users', 'w')
+            open_database_to_write.writelines(read_database)
+            database[name] = password
+            online_users[name] = password
+            online_users_name.append(name)
+            online_users_addr[name] = client_socket
+            online_users_inbox[name] = []
+            online_users_addr_to_name[client_socket] = name
+
+            break
+        else:
+            client_socket.sendall('change_this_name'.encode('utf-8'))
+            continue
+
+def inbox(client_socket):
+    confirmation = client_socket.recv(1024).decode()
+    if confirmation == 'inbox':
+        name = client_socket.recv(1024).decode()
+        whole_inbox = '\n'
+        number_of_messages = len(online_users_inbox[name])
+        for messages in online_users_inbox[name]:
+            whole_inbox += f'{messages}\n'
+        client_socket.sendall(whole_inbox.encode('utf-8'))
+
+    if confirmation == 'send':
+        receiver_name = client_socket.recv(1024).decode()
+        message = client_socket.recv(1024).decode()
+        online_users_inbox[receiver_name].append((f'From {online_users_addr_to_name[client_socket]}: {message}'))
 
 server()
