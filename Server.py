@@ -100,18 +100,41 @@ def register(client_socket):
             continue
 
 def inbox(client_socket):
-    confirmation = client_socket.recv(1024).decode()
-    if confirmation == 'inbox':
-        name = client_socket.recv(1024).decode()
-        whole_inbox = '\n'
-        number_of_messages = len(online_users_inbox[name])
-        for messages in online_users_inbox[name]:
-            whole_inbox += f'{messages}\n'
-        client_socket.sendall(whole_inbox.encode('utf-8'))
+    saved_name = ''
+    while True:
+        confirmation = client_socket.recv(1024).decode()
+        if confirmation == 'inbox':
+            if len(saved_name) == 0:
+                client_socket.sendall('give_me_the_name'.encode('utf-8'))
+                while True:
+                    name = client_socket.recv(1024).decode()
+                    if name in online_users_name:
+                        saved_name = name
+                        client_socket.sendall('valid_name'.encode('utf-8'))
+                        break
+                    else:
+                        client_socket.sendall('invalid_name'.encode('utf-8'))
+                        continue
+            else:
+                client_socket.sendall('ok'.encode('utf-8'))
+                name = saved_name
+            whole_inbox = '\n'
+            number_of_messages = len(online_users_inbox[name])
+            for messages in online_users_inbox[name]:
+                whole_inbox += f'{messages}\n'
+            client_socket.sendall(whole_inbox.encode('utf-8'))
+            continue
 
-    if confirmation == 'send':
-        receiver_name = client_socket.recv(1024).decode()
-        message = client_socket.recv(1024).decode()
-        online_users_inbox[receiver_name].append((f'From {online_users_addr_to_name[client_socket]}: {message}'))
+        if confirmation == 'send':
+            while True:
+                receiver_name = client_socket.recv(1024).decode()
+                if receiver_name in online_users_name:
+                    confirmation = client_socket.sendall('valid_name'.encode('utf-8'))
+                else:
+                    confirmation = client_socket.sendall('invalid_name'.encode('utf-8'))
+                    continue
+                message = client_socket.recv(1024).decode()
+                online_users_inbox[receiver_name].append((f'From {online_users_addr_to_name[client_socket]}: {message}'))
+                break
 
 server()
