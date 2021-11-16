@@ -102,7 +102,10 @@ def register(client_socket):
 def inbox(client_socket):
     saved_name = ''
     while True:
-        confirmation = client_socket.recv(1024).decode()
+        try:
+            confirmation = client_socket.recv(1024).decode()
+        except:
+            continue
         if confirmation == 'inbox':
             if len(saved_name) == 0:
                 client_socket.sendall('give_me_the_name'.encode('utf-8'))
