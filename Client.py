@@ -41,7 +41,8 @@ def register():
             continue
 
 def menu():
-    print('Ver inbox (c)\n')
+    print('Enviar mensagens(s)\n'
+          'Ver inbox (c)')
     while True:
         option = input('Sua opção: ')
 
